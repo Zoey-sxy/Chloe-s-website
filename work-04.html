@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>坊隅·巷陌里</title>
+    <link rel="stylesheet" href="./work-01.css" />
+  </head>
+  <body class="portfolio-book-body" data-work-folder="work-04">
+    <main class="portfolio-book-stage" id="bookStage">
+      <a class="book-back-link" href="./index.html#works">
+        <span class="book-back-face">Back to Designs</span>
+      </a>
+
+      <div class="book-viewport" id="bookViewport">
+        <div class="book-transform" id="bookTransform">
+          <div class="book" id="book" aria-label="Portfolio book" tabindex="0">
+            <div class="book-shadow" aria-hidden="true"></div>
+            <div class="book-thickness" aria-hidden="true"></div>
+
+            <div class="spread spread-next" id="spreadNext" aria-hidden="true">
+              <div class="spread-page spread-page-left" id="nextLeft"></div>
+              <div class="spread-page spread-page-right" id="nextRight"></div>
+            </div>
+
+            <div class="spread spread-current" id="spreadCurrent">
+              <div class="spread-page spread-page-left" id="currentLeft"></div>
+              <div class="spread-page spread-page-right" id="currentRight"></div>
+            </div>
+
+            <div class="page-flip" id="pageFlip" aria-hidden="true">
+              <div class="page-front" id="pageFront"></div>
+              <div class="page-back" id="pageBack"></div>
+            </div>
+
+            <div class="book-gutter" aria-hidden="true"></div>
+
+            <button
+              class="page-hit page-hit-left"
+              id="prevHit"
+              type="button"
+              aria-label="Previous page"
+            ></button>
+            <button
+              class="page-hit page-hit-right"
+              id="nextHit"
+              type="button"
+              aria-label="Next page"
+            ></button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="./work-book.js" defer></script>
+  </body>
+</html>
