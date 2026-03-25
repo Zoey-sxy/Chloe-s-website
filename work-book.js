@@ -33,6 +33,8 @@ const touchState = {
   pinchActive: false,
   pinchStartDistance: 0,
   pinchStartScale: 1,
+  pinchAnchorX: 0,
+  pinchAnchorY: 0,
   lastTapTime: 0,
   lastTapX: 0,
   lastTapY: 0,
@@ -223,6 +225,19 @@ function resetTranslation() {
   viewState.translateY = 0;
 }
 
+function getViewportLocalPoint(clientX, clientY) {
+  const rect = bookViewport.getBoundingClientRect();
+
+  return {
+    x: clientX - rect.left,
+    y: clientY - rect.top,
+  };
+}
+
+function isInteractiveTarget(target) {
+  return target instanceof Element && Boolean(target.closest("a, button"));
+}
+
 function getBackLinkNavigation() {
   const fallbackTarget = backLink?.href ?? "";
   const savedReturnState = sessionStorage.getItem(designsReturnStateKey);
@@ -404,6 +419,13 @@ function endDrag() {
   applyViewTransform();
 }
 
+function suppressClicksTemporarily() {
+  dragState.suppressClick = true;
+  window.setTimeout(() => {
+    dragState.suppressClick = false;
+  }, 0);
+}
+
 function getTouchDistance() {
   const pointers = Array.from(touchState.activePointers.values());
 
@@ -428,6 +450,59 @@ function getTouchMidpoint() {
     x: (first.x + second.x) / 2,
     y: (first.y + second.y) / 2,
   };
+}
+
+function beginPinchGesture() {
+  const midpoint = getTouchMidpoint();
+  const distance = getTouchDistance();
+
+  if (!midpoint || !distance) {
+    return;
+  }
+
+  const localPoint = getViewportLocalPoint(midpoint.x, midpoint.y);
+
+  touchState.pinchActive = true;
+  touchState.pinchStartDistance = distance;
+  touchState.pinchStartScale = viewState.scale;
+  touchState.pinchAnchorX = (localPoint.x - viewState.translateX) / viewState.scale;
+  touchState.pinchAnchorY = (localPoint.y - viewState.translateY) / viewState.scale;
+}
+
+function updatePinchGesture() {
+  const midpoint = getTouchMidpoint();
+  const distance = getTouchDistance();
+
+  if (!midpoint || !distance || !touchState.pinchStartDistance) {
+    return;
+  }
+
+  const localPoint = getViewportLocalPoint(midpoint.x, midpoint.y);
+  const scale = clamp(
+    (touchState.pinchStartScale * distance) / touchState.pinchStartDistance,
+    viewState.minScale,
+    viewState.maxScale
+  );
+
+  viewState.scale = scale;
+  viewState.translateX = localPoint.x - touchState.pinchAnchorX * scale;
+  viewState.translateY = localPoint.y - touchState.pinchAnchorY * scale;
+
+  if (viewState.scale <= viewState.minScale + 0.001) {
+    viewState.scale = viewState.minScale;
+    resetTranslation();
+  }
+
+  applyViewTransform();
+}
+
+function beginTouchDrag(pointerId, clientX, clientY) {
+  if (viewState.scale <= 1.01) {
+    return false;
+  }
+
+  beginDrag(pointerId, "touch", clientX, clientY);
+  return true;
 }
 
 function setHalfImage(element, image, side) {
@@ -595,6 +670,8 @@ function resetViewportView() {
   touchState.pinchActive = false;
   touchState.pinchStartDistance = 0;
   touchState.pinchStartScale = 1;
+  touchState.pinchAnchorX = 0;
+  touchState.pinchAnchorY = 0;
   applyViewTransform();
 
   if (bookStage.scrollTo) {
@@ -678,29 +755,24 @@ function bindEvents() {
         y: event.clientY,
       });
 
+      if (touchState.activePointers.size === 1) {
+        dragState.startX = event.clientX;
+        dragState.startY = event.clientY;
+      }
+
       if (touchState.activePointers.size === 2) {
         cancelLongPress();
         releasePointerCapture(dragState.pointerId);
         endDrag();
-        touchState.pinchActive = true;
-        touchState.pinchStartDistance = getTouchDistance();
-        touchState.pinchStartScale = viewState.scale;
+        beginPinchGesture();
+        suppressClicksTemporarily();
         return;
       }
 
-      if (viewState.scale > 1.01) {
+      if (viewState.scale > 1.01 && !isInteractiveTarget(event.target)) {
         cancelLongPress();
-        touchState.longPressPointerId = event.pointerId;
-        dragState.startX = event.clientX;
-        dragState.startY = event.clientY;
-
-        touchState.longPressTimer = window.setTimeout(() => {
-          if (touchState.longPressPointerId !== event.pointerId || touchState.pinchActive) {
-            return;
-          }
-
-          beginDrag(event.pointerId, "touch", event.clientX, event.clientY);
-        }, LONG_PRESS_DELAY);
+        event.preventDefault();
+        beginTouchDrag(event.pointerId, event.clientX, event.clientY);
       }
 
       return;
@@ -723,33 +795,9 @@ function bindEvents() {
     }
 
     if (touchState.pinchActive && touchState.activePointers.size >= 2) {
-      const distance = getTouchDistance();
-      const midpoint = getTouchMidpoint();
-
-      if (!distance || !midpoint || !touchState.pinchStartDistance) {
-        return;
-      }
-
       event.preventDefault();
-      zoomAtClient(
-        (touchState.pinchStartScale * distance) / touchState.pinchStartDistance,
-        midpoint.x,
-        midpoint.y
-      );
+      updatePinchGesture();
       return;
-    }
-
-    if (
-      event.pointerType === "touch" &&
-      touchState.longPressPointerId === event.pointerId &&
-      !dragState.active
-    ) {
-      const movedX = event.clientX - dragState.startX;
-      const movedY = event.clientY - dragState.startY;
-
-      if (Math.abs(movedX) > TAP_MOVE_TOLERANCE || Math.abs(movedY) > TAP_MOVE_TOLERANCE) {
-        cancelLongPress();
-      }
     }
 
     if (!dragState.active || dragState.pointerId !== event.pointerId) {
@@ -761,6 +809,7 @@ function bindEvents() {
   });
 
   function handlePointerEnd(event) {
+    const wasPinching = touchState.pinchActive;
     const pointerStayedMostlyStill =
       Math.hypot(event.clientX - dragState.startX, event.clientY - dragState.startY) <=
       TAP_MOVE_TOLERANCE;
@@ -771,6 +820,9 @@ function bindEvents() {
       if (touchState.activePointers.size < 2) {
         touchState.pinchActive = false;
         touchState.pinchStartDistance = 0;
+        touchState.pinchStartScale = viewState.scale;
+        touchState.pinchAnchorX = 0;
+        touchState.pinchAnchorY = 0;
       }
 
       if (touchState.longPressPointerId === event.pointerId) {
@@ -781,10 +833,20 @@ function bindEvents() {
     if (dragState.pointerId === event.pointerId) {
       releasePointerCapture(event.pointerId);
       endDrag();
-      dragState.suppressClick = true;
-      window.setTimeout(() => {
-        dragState.suppressClick = false;
-      }, 0);
+      suppressClicksTemporarily();
+    }
+
+    if (
+      wasPinching &&
+      event.pointerType === "touch" &&
+      touchState.activePointers.size === 1 &&
+      viewState.scale > 1.01
+    ) {
+      const [remainingPointerId, remainingPointer] = touchState.activePointers.entries().next().value;
+
+      beginTouchDrag(remainingPointerId, remainingPointer.x, remainingPointer.y);
+      suppressClicksTemporarily();
+      return;
     }
 
     if (
@@ -802,10 +864,7 @@ function bindEvents() {
       if (repeatedTap) {
         toggleTouchZoom(event.clientX, event.clientY);
         touchState.lastTapTime = 0;
-        dragState.suppressClick = true;
-        window.setTimeout(() => {
-          dragState.suppressClick = false;
-        }, 0);
+        suppressClicksTemporarily();
       } else {
         touchState.lastTapTime = now;
         touchState.lastTapX = event.clientX;

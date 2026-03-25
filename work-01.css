@@ -58,17 +58,6 @@ a {
   right: 44px;
 }
 
-body[data-work-folder="work-01"] .book-back-link {
-  top: 42px;
-  left: 44px;
-  font-size: 0.68rem;
-}
-
-body[data-work-folder="work-01"] .book-back-face {
-  min-height: 34px;
-  padding: 0 16px;
-}
-
 .book-back-link::before,
 .book-download-link::before {
   content: "";
@@ -666,17 +655,6 @@ body[data-work-folder="work-01"] .book-back-face {
     right: 12px;
   }
 
-  body[data-work-folder="work-01"] .book-back-link {
-    top: calc(env(safe-area-inset-top) + 0.75rem);
-    left: 12px;
-    font-size: 0.6rem;
-  }
-
-  body[data-work-folder="work-01"] .book-back-face {
-    min-height: 38px;
-    padding: 0 13px;
-  }
-
   .book-back-face {
     min-height: 38px;
     max-width: min(10.5rem, calc(100vw - 5rem));
@@ -805,6 +783,7 @@ body[data-work-folder="work-01"] .book-back-face {
     left: 50%;
     transform: translate(-50%, -50%) rotate(90deg);
     transform-origin: center center;
+    touch-action: none;
   }
 
   .book-viewport.is-portrait-landscape .page-hit {
