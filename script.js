@@ -9,8 +9,13 @@ const wechatModal = document.getElementById("wechatQrModal");
 const wechatClose = document.querySelector(".contact-qr-close");
 const contactPortalImage = document.querySelector(".contact-portal-image");
 const projectIndexImages = document.querySelectorAll(".project-index img");
-const contactNavLink = document.querySelector('.site-nav a[href="#contact"]');
+const navLinks = document.querySelectorAll(
+  '.site-nav a[href^="#"], .mobile-nav-link[href^="#"]'
+);
+const contactNavLinks = document.querySelectorAll('a[href="#contact"]');
+const recordingsNavLinks = document.querySelectorAll('a[href="#recordings"]');
 const projectLinks = document.querySelectorAll('.project-title-link[href^="./work-"]');
+const mobileNavLinks = document.querySelectorAll(".mobile-nav-link");
 const storageKey = "chloe-theme";
 const designsReturnStateKey = "chloe-designs-return-state";
 const designsRestoreFlagKey = "chloe-designs-restore-pending";
@@ -165,20 +170,80 @@ window.addEventListener("keydown", (event) => {
   }
 });
 
-contactNavLink?.addEventListener("click", (event) => {
-  event.preventDefault();
-  const targetTop = Math.max(
-    document.documentElement.scrollHeight - window.innerHeight,
-    0
-  );
-  window.scrollTo({
-    top: targetTop,
-    behavior: "smooth",
+contactNavLinks.forEach((link) => {
+  link.addEventListener("click", (event) => {
+    event.preventDefault();
+    const targetTop = Math.max(
+      document.documentElement.scrollHeight - window.innerHeight,
+      0
+    );
+    window.scrollTo({
+      top: targetTop,
+      behavior: "smooth",
+    });
+    if (window.location.hash === "#contact") {
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
   });
-  if (window.location.hash === "#contact") {
-    history.replaceState(null, "", window.location.pathname + window.location.search);
-  }
 });
+
+recordingsNavLinks.forEach((link) => {
+  link.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+  });
+});
+
+const mobileSections = Array.from(
+  document.querySelectorAll("#about, #works, #recordings, #contact")
+);
+
+function setMobileNavActive(sectionId) {
+  mobileNavLinks.forEach((link) => {
+    link.classList.toggle("is-active", link.dataset.section === sectionId);
+  });
+}
+
+if (mobileNavLinks.length && mobileSections.length) {
+  setMobileNavActive("about");
+
+  const sectionObserver = new IntersectionObserver(
+    (entries) => {
+      const visibleEntries = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+      if (!visibleEntries.length) {
+        return;
+      }
+
+      setMobileNavActive(visibleEntries[0].target.id);
+    },
+    {
+      root: null,
+      rootMargin: "-22% 0px -48%",
+      threshold: [0.15, 0.32, 0.5, 0.7],
+    }
+  );
+
+  mobileSections.forEach((section) => {
+    sectionObserver.observe(section);
+  });
+
+  navLinks.forEach((link) => {
+    const sectionId = link.getAttribute("href")?.slice(1);
+    if (!sectionId) {
+      return;
+    }
+
+    link.addEventListener("click", () => {
+      if (sectionId === "recordings") {
+        return;
+      }
+      setMobileNavActive(sectionId);
+    });
+  });
+}
 
 window.addEventListener("load", () => {
   if (window.location.hash === "#contact") {

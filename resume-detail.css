@@ -590,6 +590,11 @@ img {
     padding: 0.7rem 1rem;
   }
 
+  .resume-badge {
+    min-height: 1.85rem;
+    font-size: 0.82rem;
+  }
+
   .resume-aside,
   .resume-main {
     border-radius: 1.5rem;
@@ -608,6 +613,11 @@ img {
     border-radius: 1.2rem;
   }
 
+  .info-label {
+    font-size: 0.76rem;
+    letter-spacing: 0.03em;
+  }
+
   .info-item,
   .detail-cell,
   .highlight,
@@ -616,8 +626,21 @@ img {
     padding: 0.9rem;
   }
 
+  .role-meta {
+    gap: 0.5rem;
+    margin-bottom: 0.8rem;
+  }
+
   .timeline-item {
     padding-top: 0.85rem;
+  }
+
+  .timeline-year {
+    font-size: 0.98rem;
+  }
+
+  .software-group h3 {
+    font-size: 1rem;
   }
 
   .tag {

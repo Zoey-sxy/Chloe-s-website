@@ -98,15 +98,47 @@ body[data-work-folder="work-01"] .book-back-face {
   transition: transform 180ms ease;
 }
 
-.book-back-link:hover .book-back-face,
 .book-back-link:focus-visible .book-back-face,
 .book-download-link:hover .book-back-face,
 .book-download-link:focus-visible .book-back-face {
   transform: translate(6px, 6px);
 }
 
+.book-back-link:active .book-back-face {
+  transform: translate(6px, 6px);
+}
+
+@keyframes back-link-mobile-tap {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  45% {
+    transform: translate(6px, 6px);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes page-hit-mobile-tap {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  45% {
+    transform: translate(6px, 6px);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
 .portfolio-book-stage {
   position: relative;
+  isolation: isolate;
   width: 100%;
   height: 100dvh;
   min-height: 0;
@@ -159,23 +191,47 @@ body[data-work-folder="work-01"] .book-back-face {
   outline: none;
 }
 
+.book::before,
+.book::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(6px);
+}
+
+.book::before {
+  left: 1.8%;
+  right: -20px;
+  bottom: -20px;
+  height: 20px;
+  background: linear-gradient(
+    180deg,
+    rgba(40, 31, 23, 0.22) 0%,
+    rgba(40, 31, 23, 0.13) 52%,
+    rgba(40, 31, 23, 0) 100%
+  );
+}
+
+.book::after {
+  top: 1.2%;
+  right: -20px;
+  bottom: -20px;
+  width: 20px;
+  background: linear-gradient(
+    90deg,
+    rgba(40, 31, 23, 0) 0%,
+    rgba(40, 31, 23, 0.13) 48%,
+    rgba(40, 31, 23, 0.22) 100%
+  );
+}
+
 .book:focus-visible {
   box-shadow: 0 0 0 3px rgba(138, 111, 84, 0.18);
 }
 
 .book-shadow {
-  position: absolute;
-  inset: 3% -2.2% -11% -0.2%;
-  background:
-    radial-gradient(ellipse at 50% 92%, rgba(82, 65, 49, 0.08), rgba(82, 65, 49, 0) 46%),
-    radial-gradient(ellipse at 86% 88%, rgba(82, 65, 49, 0.13), rgba(82, 65, 49, 0) 26%),
-    radial-gradient(ellipse at 94% 96%, rgba(82, 65, 49, 0.12), rgba(82, 65, 49, 0) 18%),
-    radial-gradient(ellipse at 14% 86%, rgba(82, 65, 49, 0.04), rgba(82, 65, 49, 0) 22%);
-  filter: blur(30px);
-  transform: translate3d(0, 26px, -40px);
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.98;
+  display: none;
 }
 
 .book-thickness {
@@ -186,29 +242,11 @@ body[data-work-folder="work-01"] .book-back-face {
 }
 
 .book-thickness::before {
-  content: "";
-  position: absolute;
-  right: -10px;
-  bottom: -10px;
-  width: 99.8%;
-  height: 100%;
-  background: linear-gradient(180deg, rgba(232, 223, 211, 0.56), rgba(202, 187, 168, 0.84));
-  clip-path: polygon(0 98.2%, 99.2% 98.2%, 100% 100%, 0.8% 100%);
+  content: none;
 }
 
 .book-thickness::after {
-  content: "";
-  position: absolute;
-  right: -54px;
-  bottom: -30px;
-  width: 34%;
-  height: 22%;
-  background:
-    radial-gradient(ellipse at 24% 26%, rgba(78, 61, 46, 0.16), rgba(78, 61, 46, 0) 48%),
-    radial-gradient(ellipse at 58% 68%, rgba(78, 61, 46, 0.1), rgba(78, 61, 46, 0) 56%),
-    radial-gradient(ellipse at 84% 92%, rgba(78, 61, 46, 0.08), rgba(78, 61, 46, 0) 42%);
-  filter: blur(18px);
-  opacity: 0.94;
+  content: none;
 }
 
 .spread {
@@ -555,6 +593,9 @@ body[data-work-folder="work-01"] .book-back-face {
 
 .page-hit:disabled {
   pointer-events: none;
+}
+
+.page-hit.is-boundary-disabled {
   opacity: 0.42;
 }
 
@@ -588,12 +629,33 @@ body[data-work-folder="work-01"] .book-back-face {
 }
 
 @media (max-width: 720px) {
+  .book-back-link:active .book-back-face {
+    transform: none;
+  }
+
+  .book-back-link.is-tap-animating .book-back-face {
+    animation: back-link-mobile-tap 180ms ease-out;
+  }
+
+  .page-hit:active::after {
+    transform: none;
+  }
+
+  .page-hit:hover::after,
+  .page-hit:focus-visible::after {
+    transform: none;
+  }
+
+  .page-hit.is-tap-animating::after {
+    animation: page-hit-mobile-tap 180ms ease-out;
+  }
+
   .book-back-link,
   .book-download-link {
     position: fixed;
     top: calc(env(safe-area-inset-top) + 0.75rem);
     font-size: 0.6rem;
-    z-index: 90;
+    z-index: 140;
   }
 
   .book-back-link {
@@ -629,30 +691,32 @@ body[data-work-folder="work-01"] .book-back-face {
     justify-content: flex-start;
     height: 100svh;
     min-height: 100svh;
-    padding: calc(env(safe-area-inset-top) + 4.25rem) 12px calc(env(safe-area-inset-bottom) + 5rem);
+    padding: calc(env(safe-area-inset-top) + 4.25rem) 12px calc(env(safe-area-inset-bottom) + 7rem);
     overflow: auto;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
   }
 
   .book-viewport {
-    width: 1120px;
+    width: max(940px, min(1120px, 270vw));
     min-width: 0;
-    margin-top: 1cm;
+    margin-top: 0.65cm;
     touch-action: pan-x pan-y pinch-zoom;
   }
 
   .page-hit {
-    bottom: -74px;
+    bottom: -82px;
     z-index: 90;
   }
 
   .page-hit::after {
     min-height: 38px;
-    max-width: min(11.25rem, calc(100vw - 5rem));
+    max-width: min(10.5rem, calc(50vw - 1.25rem));
     padding: 0 13px;
     white-space: normal;
     line-height: 1.15;
     text-align: center;
+    font-size: 0.58rem;
   }
 
   .page-hit-left {
@@ -664,26 +728,143 @@ body[data-work-folder="work-01"] .book-back-face {
   }
 }
 
+@media (max-width: 720px) and (orientation: portrait) {
+  body {
+    overflow: hidden;
+  }
+
+  .book-back-link,
+  .book-download-link {
+    position: fixed;
+    top: calc(env(safe-area-inset-top) + 0.9rem);
+    transform: rotate(90deg) translateY(-100%);
+    transform-origin: top left;
+    z-index: 180;
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+
+  .book-back-link {
+    left: auto;
+    right: calc(env(safe-area-inset-right) + 0.4rem - 1cm);
+    top: calc(env(safe-area-inset-top) + 2.5rem);
+  }
+
+  .book-back-link.is-book-bound {
+    position: absolute;
+    top: calc(-74px + 0.2cm);
+    left: 12px;
+    right: auto;
+    transform: none;
+    transform-origin: center center;
+    z-index: 95;
+    will-change: auto;
+    backface-visibility: visible;
+  }
+
+  .book-download-link {
+    right: auto;
+    left: calc(env(safe-area-inset-left) + 4.9rem);
+  }
+
+  .book-download-link.is-book-bound {
+    position: absolute;
+    top: calc(-74px + 0.2cm);
+    bottom: auto;
+    left: auto;
+    right: 12px;
+    transform: none;
+    transform-origin: center center;
+    z-index: 95;
+    will-change: auto;
+    backface-visibility: visible;
+  }
+
+  .portfolio-book-stage {
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    height: 100svh;
+    min-height: 100svh;
+    padding:
+      calc(env(safe-area-inset-top) + 3.35rem)
+      12px
+      calc(env(safe-area-inset-bottom) + 5.8rem);
+    overflow: hidden;
+    -webkit-overflow-scrolling: auto;
+    overscroll-behavior: none;
+  }
+
+  .book-viewport {
+    margin-top: 0;
+  }
+
+  .book-viewport.is-portrait-landscape {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center center;
+  }
+
+  .book-viewport.is-portrait-landscape .page-hit {
+    z-index: 95;
+  }
+
+  .book-viewport.is-portrait-landscape .page-hit {
+    bottom: -74px;
+  }
+}
+
 @media (max-width: 420px) {
   .book-back-link,
   .book-download-link {
     font-size: 0.56rem;
   }
 
+  .book-back-link {
+    left: 10px;
+  }
+
+  .book-download-link {
+    right: 10px;
+  }
+
   .book-back-face {
     min-height: 36px;
-    max-width: min(9rem, calc(100vw - 5rem));
+    max-width: min(8.25rem, calc(50vw - 0.95rem));
     padding: 0 10px;
   }
 
   .page-hit {
-    bottom: -70px;
+    bottom: -78px;
   }
 
   .page-hit::after {
     min-height: 36px;
-    max-width: min(9.75rem, calc(100vw - 5rem));
+    max-width: min(8.85rem, calc(50vw - 0.95rem));
     padding: 0 10px;
+    font-size: 0.54rem;
+  }
+}
+
+@media (max-width: 420px) and (orientation: portrait) {
+  .book-back-link {
+    left: auto;
+    right: calc(env(safe-area-inset-right) + 0.3rem - 1cm);
+  }
+
+  .book-back-link.is-book-bound {
+    top: calc(-78px + 0.2cm);
+    left: 12px;
+    right: auto;
+  }
+
+  .book-download-link.is-book-bound {
+    top: calc(-78px + 0.2cm);
+    bottom: auto;
+    right: 12px;
+    left: auto;
   }
 }
 

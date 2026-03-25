@@ -47,6 +47,9 @@ const TAP_MOVE_TOLERANCE = 10;
 const LONG_PRESS_DELAY = 220;
 const WHEEL_ZOOM_SPEED = 0.0022;
 const mobileBookMedia = window.matchMedia("(max-width: 720px)");
+const portraitLandscapeBookMedia = window.matchMedia(
+  "(max-width: 720px) and (orientation: portrait)"
+);
 
 const bookStage = document.getElementById("bookStage");
 const bookViewport = document.getElementById("bookViewport");
@@ -62,9 +65,83 @@ const prevHit = document.getElementById("prevHit");
 const nextHit = document.getElementById("nextHit");
 const book = document.getElementById("book");
 const backLink = document.querySelector(".book-back-link");
+const downloadLink = document.querySelector(".book-download-link");
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const designsReturnStateKey = "chloe-designs-return-state";
 const designsRestoreFlagKey = "chloe-designs-restore-pending";
+const BACK_LINK_TAP_ANIMATION_MS = 180;
+const pageHitHost = book;
+const backLinkHost = book;
+const downloadLinkHost = book;
+const backLinkParent = backLink?.parentElement ?? null;
+const backLinkNextSibling = backLink?.nextSibling ?? null;
+const downloadLinkParent = downloadLink?.parentElement ?? null;
+const downloadLinkNextSibling = downloadLink?.nextSibling ?? null;
+let backLinkTapAnimationTimer = null;
+
+function moveNodeBeforeReference(node, parent, referenceNode) {
+  if (!node || !parent) {
+    return;
+  }
+
+  if (referenceNode && referenceNode.parentNode === parent) {
+    parent.insertBefore(node, referenceNode);
+    return;
+  }
+
+  parent.appendChild(node);
+}
+
+function syncOverlayControls() {
+  if (backLink) {
+    const shouldBindBackLinkToBook = isPortraitLandscapeBookMode() && backLinkHost;
+
+    backLink.classList.toggle("is-book-bound", Boolean(shouldBindBackLinkToBook));
+
+    if (shouldBindBackLinkToBook) {
+      if (backLink.parentElement !== backLinkHost) {
+        backLinkHost.appendChild(backLink);
+      }
+    } else if (backLink.parentElement !== backLinkParent) {
+      moveNodeBeforeReference(backLink, backLinkParent, backLinkNextSibling);
+    }
+  }
+
+  if (downloadLink) {
+    const shouldBindDownloadLinkToBook = isPortraitLandscapeBookMode() && downloadLinkHost;
+
+    downloadLink.classList.toggle("is-book-bound", Boolean(shouldBindDownloadLinkToBook));
+
+    if (shouldBindDownloadLinkToBook) {
+      if (downloadLink.parentElement !== downloadLinkHost) {
+        downloadLinkHost.appendChild(downloadLink);
+      }
+    } else if (downloadLink.parentElement !== downloadLinkParent) {
+      moveNodeBeforeReference(downloadLink, downloadLinkParent, downloadLinkNextSibling);
+    }
+  }
+}
+
+function isPortraitLandscapeBookMode() {
+  return portraitLandscapeBookMedia.matches;
+}
+
+function syncPortraitControls() {
+  syncOverlayControls();
+
+  if (prevHit.parentElement !== pageHitHost) {
+    pageHitHost.append(prevHit);
+  }
+
+  if (nextHit.parentElement !== pageHitHost) {
+    pageHitHost.append(nextHit);
+  }
+
+  bookViewport.classList.toggle(
+    "is-portrait-landscape",
+    isPortraitLandscapeBookMode()
+  );
+}
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -82,6 +159,8 @@ function getViewportBounds() {
 }
 
 function fitViewportToStage() {
+  syncPortraitControls();
+
   const stageStyles = window.getComputedStyle(bookStage);
   const availableWidth =
     bookStage.clientWidth -
@@ -93,6 +172,21 @@ function fitViewportToStage() {
     parseFloat(stageStyles.paddingBottom);
 
   if (availableWidth <= 0 || availableHeight <= 0) {
+    return;
+  }
+
+  if (isPortraitLandscapeBookMode()) {
+    const fitWidth = clamp(
+      Math.min(
+        BOOK_MAX_WIDTH,
+        availableHeight * 0.96,
+        availableWidth * BOOK_RATIO * 0.96
+      ),
+      640,
+      1440
+    );
+
+    bookViewport.style.width = `${fitWidth}px`;
     return;
   }
 
@@ -127,6 +221,93 @@ function applyViewTransform() {
 function resetTranslation() {
   viewState.translateX = 0;
   viewState.translateY = 0;
+}
+
+function getBackLinkNavigation() {
+  const fallbackTarget = backLink?.href ?? "";
+  const savedReturnState = sessionStorage.getItem(designsReturnStateKey);
+
+  if (!savedReturnState) {
+    return {
+      target: fallbackTarget,
+      shouldRestoreState: false,
+    };
+  }
+
+  try {
+    const parsedState = JSON.parse(savedReturnState);
+
+    if (!parsedState.path) {
+      return {
+        target: fallbackTarget,
+        shouldRestoreState: false,
+      };
+    }
+
+    return {
+      target: parsedState.path,
+      shouldRestoreState: true,
+    };
+  } catch (error) {
+    console.warn("Failed to restore previous Designs page.", error);
+
+    return {
+      target: fallbackTarget,
+      shouldRestoreState: false,
+    };
+  }
+}
+
+function navigateBackLink() {
+  const navigation = getBackLinkNavigation();
+
+  if (!navigation.target) {
+    return;
+  }
+
+  if (navigation.shouldRestoreState) {
+    sessionStorage.setItem(designsRestoreFlagKey, "true");
+  }
+
+  window.location.href = navigation.target;
+}
+
+function playBackLinkTapAnimation(onComplete) {
+  if (!backLink) {
+    onComplete?.();
+    return;
+  }
+
+  if (backLinkTapAnimationTimer) {
+    window.clearTimeout(backLinkTapAnimationTimer);
+  }
+
+  backLink.classList.remove("is-tap-animating");
+  void backLink.offsetWidth;
+  backLink.classList.add("is-tap-animating");
+
+  backLinkTapAnimationTimer = window.setTimeout(() => {
+    backLink.classList.remove("is-tap-animating");
+    backLinkTapAnimationTimer = null;
+    onComplete?.();
+  }, BACK_LINK_TAP_ANIMATION_MS);
+}
+
+function playPageHitTapAnimation(button, onComplete) {
+  if (!button) {
+    onComplete?.();
+    return;
+  }
+
+  button.classList.remove("is-tap-animating");
+  void button.offsetWidth;
+  button.classList.add("is-tap-animating");
+
+  window.setTimeout(() => {
+    button.classList.remove("is-tap-animating");
+    button.blur?.();
+    onComplete?.();
+  }, BACK_LINK_TAP_ANIMATION_MS);
 }
 
 function zoomAtClient(nextScale, clientX, clientY) {
@@ -265,8 +446,13 @@ function resetCurrentVisibility() {
 }
 
 function updateHitState() {
-  prevHit.disabled = state.isAnimating || state.index === 0;
-  nextHit.disabled = state.isAnimating || state.index >= state.spreads.length - 1;
+  const isAtStart = state.index === 0;
+  const isAtEnd = state.index >= state.spreads.length - 1;
+
+  prevHit.disabled = state.isAnimating || isAtStart;
+  nextHit.disabled = state.isAnimating || isAtEnd;
+  prevHit.classList.toggle("is-boundary-disabled", isAtStart);
+  nextHit.classList.toggle("is-boundary-disabled", isAtEnd);
 }
 
 function renderCurrentSpread() {
@@ -420,33 +606,46 @@ function resetViewportView() {
 
 function bindEvents() {
   backLink?.addEventListener("click", (event) => {
-    const savedReturnState = sessionStorage.getItem(designsReturnStateKey);
+    if (!mobileBookMedia.matches) {
+      const navigation = getBackLinkNavigation();
 
-    if (!savedReturnState) {
-      return;
-    }
-
-    try {
-      const parsedState = JSON.parse(savedReturnState);
-
-      if (!parsedState.path) {
+      if (!navigation.shouldRestoreState) {
         return;
       }
 
       event.preventDefault();
-      sessionStorage.setItem(designsRestoreFlagKey, "true");
-      window.location.href = parsedState.path;
-    } catch (error) {
-      console.warn("Failed to restore previous Designs page.", error);
+      navigateBackLink();
+      return;
     }
+
+    event.preventDefault();
+    playBackLinkTapAnimation(() => {
+      navigateBackLink();
+    });
   });
 
-  nextHit.addEventListener("click", () => {
-    beginTurn("next");
+  nextHit.addEventListener("click", (event) => {
+    if (!mobileBookMedia.matches) {
+      beginTurn("next");
+      return;
+    }
+
+    event.preventDefault();
+    playPageHitTapAnimation(nextHit, () => {
+      beginTurn("next");
+    });
   });
 
-  prevHit.addEventListener("click", () => {
-    beginTurn("prev");
+  prevHit.addEventListener("click", (event) => {
+    if (!mobileBookMedia.matches) {
+      beginTurn("prev");
+      return;
+    }
+
+    event.preventDefault();
+    playPageHitTapAnimation(prevHit, () => {
+      beginTurn("prev");
+    });
   });
 
   book.addEventListener("keydown", (event) => {
