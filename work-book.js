@@ -227,10 +227,39 @@ function resetTranslation() {
 
 function getViewportLocalPoint(clientX, clientY) {
   const rect = bookViewport.getBoundingClientRect();
+  const localWidth = bookViewport.clientWidth || rect.width;
+  const localHeight = bookViewport.clientHeight || rect.height;
+
+  if (isPortraitLandscapeBookMode()) {
+    const normalizedX = clamp((clientX - rect.left) / rect.width, 0, 1);
+    const normalizedY = clamp((clientY - rect.top) / rect.height, 0, 1);
+
+    return {
+      x: (1 - normalizedY) * localWidth,
+      y: normalizedX * localHeight,
+    };
+  }
 
   return {
     x: clientX - rect.left,
     y: clientY - rect.top,
+  };
+}
+
+function getDragDelta(clientX, clientY) {
+  const dx = clientX - dragState.startX;
+  const dy = clientY - dragState.startY;
+
+  if (isPortraitLandscapeBookMode()) {
+    return {
+      x: -dy,
+      y: dx,
+    };
+  }
+
+  return {
+    x: dx,
+    y: dy,
   };
 }
 
@@ -398,11 +427,10 @@ function beginDrag(pointerId, pointerType, clientX, clientY) {
 }
 
 function updateDrag(clientX, clientY) {
-  const dx = clientX - dragState.startX;
-  const dy = clientY - dragState.startY;
+  const delta = getDragDelta(clientX, clientY);
 
-  viewState.translateX = dragState.originX + dx;
-  viewState.translateY = dragState.originY + dy;
+  viewState.translateX = dragState.originX + delta.x;
+  viewState.translateY = dragState.originY + delta.y;
   applyViewTransform();
 }
 
