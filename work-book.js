@@ -252,8 +252,8 @@ function getDragDelta(clientX, clientY) {
 
   if (isPortraitLandscapeBookMode()) {
     return {
-      x: -dy,
-      y: dx,
+      x: dy,
+      y: -dx,
     };
   }
 
