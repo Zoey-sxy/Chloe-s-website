@@ -40,29 +40,30 @@ a {
 .book-back-link,
 .book-download-link {
   position: absolute;
-  top: 42px;
+  top: 34px;
   z-index: 20;
   display: inline-block;
   color: #25232b;
   letter-spacing: 0.01em;
-  font-size: 0.68rem;
+  font-size: 0.58rem;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .book-back-link {
-  left: 44px;
+  top: 40px;
+  left: 40px;
 }
 
 .book-download-link {
-  right: 44px;
+  right: 34px;
 }
 
 .book-back-link::before,
 .book-download-link::before {
   content: "";
   position: absolute;
-  inset: 6px -6px -6px 6px;
+  inset: 5px -5px -5px 5px;
   background: #3c3844;
   pointer-events: none;
 }
@@ -80,8 +81,8 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 34px;
-  padding: 0 16px;
+  min-height: 30px;
+  padding: 0 14px;
   border: 2px solid #3c3844;
   background: #ffffff;
   transition: transform 180ms ease;
@@ -135,7 +136,7 @@ a {
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  padding: 96px 44px 112px;
+  padding: 96px 44px 44px;
   overflow: hidden;
 }
 
@@ -144,7 +145,7 @@ a {
   width: 1680px;
   aspect-ratio: var(--book-ratio);
   flex: 0 0 auto;
-  margin-top: calc(-26px + 1cm);
+  margin-top: -26px;
   overflow: visible;
   touch-action: none;
   cursor: default;
@@ -517,7 +518,7 @@ a {
 
 .page-hit {
   position: absolute;
-  bottom: -76px;
+  bottom: -60px;
   z-index: 20;
   display: inline-flex;
   appearance: none;
@@ -525,7 +526,7 @@ a {
   opacity: 1;
   color: #25232b;
   letter-spacing: 0.01em;
-  font-size: 0.68rem;
+  font-size: 0.58rem;
   font-weight: 700;
   white-space: nowrap;
   border: 0;
@@ -537,7 +538,7 @@ a {
 .page-hit::before {
   content: "";
   position: absolute;
-  inset: 6px -6px -6px 6px;
+  inset: 5px -5px -5px 5px;
   background: #3c3844;
   pointer-events: none;
 }
@@ -548,8 +549,8 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 34px;
-  padding: 0 16px;
+  min-height: 30px;
+  padding: 0 14px;
   border: 2px solid #3c3844;
   background: #ffffff;
   transition: transform 180ms ease;
@@ -597,6 +598,58 @@ a {
   outline: none;
 }
 
+@media (min-width: 721px) {
+  body[data-work-folder="work-01"] .portfolio-book-stage {
+    padding: 78px 40px 78px;
+    overflow: hidden;
+  }
+
+  body[data-work-folder="work-01"] .book-viewport {
+    width: min(1680px, calc(100vw - 92px));
+    margin-top: 0;
+  }
+
+  body[data-work-folder="work-01"] .book-back-link {
+    position: fixed;
+    top: 26px;
+    left: 52px;
+    font-size: 0.54rem;
+  }
+
+  body[data-work-folder="work-01"] .book-back-link::before {
+    inset: 4px -4px -4px 4px;
+  }
+
+  body[data-work-folder="work-01"] .book-back-face {
+    min-height: 28px;
+    padding: 0 12px;
+  }
+
+  body[data-work-folder="work-01"] .page-hit {
+    position: fixed;
+    bottom: calc(-12px - 1cm);
+    font-size: 0.54rem;
+    z-index: 20;
+  }
+
+  body[data-work-folder="work-01"] .page-hit::before {
+    inset: 4px -4px -4px 4px;
+  }
+
+  body[data-work-folder="work-01"] .page-hit::after {
+    min-height: 28px;
+    padding: 0 12px;
+  }
+
+  body[data-work-folder="work-01"] .page-hit-left {
+    left: 16px;
+  }
+
+  body[data-work-folder="work-01"] .page-hit-right {
+    right: 16px;
+  }
+}
+
 @media (max-width: 1200px) {
   body {
     overflow: auto;
@@ -607,17 +660,27 @@ a {
     overflow: auto;
     height: auto;
     min-height: 100vh;
-    padding: 84px 20px 116px;
+    padding: 84px 20px 44px;
   }
 
   .book-viewport {
     width: 1180px;
     min-width: 0;
-    margin-top: 1cm;
+    margin-top: 0;
   }
 }
 
 @media (max-width: 720px) {
+  .book-viewport,
+  .book-transform,
+  .book,
+  .spread,
+  .spread-page,
+  .page-front,
+  .page-back {
+    touch-action: none;
+  }
+
   .book-back-link:active .book-back-face {
     transform: none;
   }

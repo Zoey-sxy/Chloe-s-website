@@ -16,9 +16,12 @@ const contactNavLinks = document.querySelectorAll('a[href="#contact"]');
 const recordingsNavLinks = document.querySelectorAll('a[href="#recordings"]');
 const projectLinks = document.querySelectorAll('.project-title-link[href^="./work-"]');
 const mobileNavLinks = document.querySelectorAll(".mobile-nav-link");
+const heroAboutLink = document.querySelector(".hero-about-link");
+const aboutSection = document.getElementById("about");
 const storageKey = "chloe-theme";
 const designsReturnStateKey = "chloe-designs-return-state";
 const designsRestoreFlagKey = "chloe-designs-restore-pending";
+const mobileHeroMedia = window.matchMedia("(max-width: 900px)");
 let flickerTimer = null;
 
 function setTheme(theme) {
@@ -244,6 +247,19 @@ if (mobileNavLinks.length && mobileSections.length) {
     });
   });
 }
+
+heroAboutLink?.addEventListener("click", (event) => {
+  if (!mobileHeroMedia.matches || !aboutSection) {
+    return;
+  }
+
+  event.preventDefault();
+  setMobileNavActive("about");
+  aboutSection.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+});
 
 window.addEventListener("load", () => {
   if (window.location.hash === "#contact") {

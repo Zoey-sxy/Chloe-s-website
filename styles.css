@@ -1687,7 +1687,16 @@ body[data-theme="night"] .contact-panel {
 
   .hero-copy {
     min-height: auto;
+    position: relative;
+    z-index: 5;
     padding: 4rem 1.5rem 3rem;
+  }
+
+  .hero-about-link {
+    position: relative;
+    z-index: 6;
+    pointer-events: auto;
+    touch-action: manipulation;
   }
 
   .hero-scene {
@@ -2203,6 +2212,16 @@ body[data-theme="night"] .contact-panel {
   .project-subtitle,
   .project-item-featured .project-subtitle {
     font-size: 1.08rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .project-item-featured .project-subtitle {
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: keep-all;
+    letter-spacing: -0.05em;
   }
 
   .project-content {
@@ -2426,6 +2445,16 @@ body[data-theme="night"] .contact-panel {
   .project-item-featured .project-subtitle {
     font-size: 0.98rem;
     line-height: 1.55;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .project-item-featured .project-subtitle {
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: keep-all;
+    letter-spacing: -0.08em;
   }
 
   .project-content p:last-child {

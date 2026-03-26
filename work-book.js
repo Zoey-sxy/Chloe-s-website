@@ -771,8 +771,6 @@ function bindEvents() {
 
       if (viewState.scale > 1.01 && !isInteractiveTarget(event.target)) {
         cancelLongPress();
-        event.preventDefault();
-        beginTouchDrag(event.pointerId, event.clientX, event.clientY);
       }
 
       return;
@@ -798,6 +796,26 @@ function bindEvents() {
       event.preventDefault();
       updatePinchGesture();
       return;
+    }
+
+    if (
+      event.pointerType === "touch" &&
+      !dragState.active &&
+      !touchState.pinchActive &&
+      touchState.activePointers.size === 1 &&
+      viewState.scale > 1.01 &&
+      !isInteractiveTarget(event.target)
+    ) {
+      const movedX = event.clientX - dragState.startX;
+      const movedY = event.clientY - dragState.startY;
+
+      if (Math.abs(movedX) > TAP_MOVE_TOLERANCE || Math.abs(movedY) > TAP_MOVE_TOLERANCE) {
+        event.preventDefault();
+        beginTouchDrag(event.pointerId, dragState.startX, dragState.startY);
+        updateDrag(event.clientX, event.clientY);
+        suppressClicksTemporarily();
+        return;
+      }
     }
 
     if (!dragState.active || dragState.pointerId !== event.pointerId) {
