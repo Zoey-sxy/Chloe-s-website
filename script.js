@@ -13,16 +13,55 @@ const navLinks = document.querySelectorAll(
   '.site-nav a[href^="#"], .mobile-nav-link[href^="#"]'
 );
 const contactNavLinks = document.querySelectorAll('a[href="#contact"]');
-const recordingsNavLinks = document.querySelectorAll('a[href="#recordings"]');
 const projectLinks = document.querySelectorAll('.project-title-link[href^="./work-"]');
 const mobileNavLinks = document.querySelectorAll(".mobile-nav-link");
 const heroAboutLink = document.querySelector(".hero-about-link");
 const aboutSection = document.getElementById("about");
+const root = document.documentElement;
 const storageKey = "chloe-theme";
 const designsReturnStateKey = "chloe-designs-return-state";
 const designsRestoreFlagKey = "chloe-designs-restore-pending";
 const mobileHeroMedia = window.matchMedia("(max-width: 900px)");
 let flickerTimer = null;
+
+function clamp(min, value, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function setDesktopScaleVar(name, value) {
+  root.style.setProperty(name, value.toFixed(4));
+}
+
+function updateDesktopScales() {
+  if (window.innerWidth <= 900) {
+    setDesktopScaleVar("--desktop-scale", 1);
+    setDesktopScaleVar("--desktop-header-scale", 1);
+    setDesktopScaleVar("--desktop-scene-scale", 1);
+    setDesktopScaleVar("--desktop-cards-scale", 1);
+    setDesktopScaleVar("--desktop-designs-scale", 1);
+    setDesktopScaleVar("--desktop-contact-scale", 1);
+    return;
+  }
+
+  const widthRatio = window.innerWidth / 1440;
+  const heightRatio = window.innerHeight / 900;
+  const heroScale = clamp(0.86, Math.min(widthRatio, heightRatio + 0.08), 1.14);
+  const headerScale = clamp(0.84, Math.min(widthRatio, heightRatio + 0.12), 1.12);
+  const sceneScale = clamp(0.84, Math.min(widthRatio, heightRatio + 0.04), 1.12);
+  const cardsScale = clamp(0.7, window.innerWidth / 1520, 1.06);
+  const designsScale = clamp(0.76, window.innerWidth / 1280, 1.1);
+  const contactScale = clamp(0.82, Math.min(window.innerWidth / 1080, heightRatio + 0.16), 1.08);
+
+  setDesktopScaleVar("--desktop-scale", heroScale);
+  setDesktopScaleVar("--desktop-header-scale", headerScale);
+  setDesktopScaleVar("--desktop-scene-scale", sceneScale);
+  setDesktopScaleVar("--desktop-cards-scale", cardsScale);
+  setDesktopScaleVar("--desktop-designs-scale", designsScale);
+  setDesktopScaleVar("--desktop-contact-scale", contactScale);
+}
+
+updateDesktopScales();
+window.addEventListener("resize", updateDesktopScales);
 
 function setTheme(theme) {
   const isNight = theme === "night";
@@ -190,15 +229,8 @@ contactNavLinks.forEach((link) => {
   });
 });
 
-recordingsNavLinks.forEach((link) => {
-  link.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-  });
-});
-
 const mobileSections = Array.from(
-  document.querySelectorAll("#about, #works, #recordings, #contact")
+  document.querySelectorAll("#about, #works, #contact")
 );
 
 function setMobileNavActive(sectionId) {
@@ -240,9 +272,6 @@ if (mobileNavLinks.length && mobileSections.length) {
     }
 
     link.addEventListener("click", () => {
-      if (sectionId === "recordings") {
-        return;
-      }
       setMobileNavActive(sectionId);
     });
   });
